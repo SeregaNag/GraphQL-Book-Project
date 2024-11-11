@@ -12,8 +12,32 @@ driver.verifyConnectivity().then(() => {
 
 
 const typeDefs = /* GraphQL */ `
+type Query {
+    fuzzyBusinessByName(searchString: String): [Business!]!
+      @cypher(
+        statement: """
+        CALL db.index.fulltext.queryNodes( 'businessNameIndex', $searchString+'~')
+        YIELD node RETURN node
+        """
+      )
+  }
+
 type Business {
     businessId: ID!
+    waitTime: Int! 
+    averageStars: Float! 
+      @cypher(
+        statement: "MATCH (this)<-[:REVIEWS]-(r:Review) RETURN avg(r.stars)"
+      )
+    recommended(first: Int=1): [Business!]!
+      @cypher(
+        statement: """
+        match(this)<-[:REVIEWS]-(:Review)<-[:WROTE]-(u:User)
+        match(u)-[:WROTE]->(:Review)-[:REVIEWS]->(rec:Business)
+        WITH rec, COUNT(*) AS score
+        RETURN rec order by score DESC LIMIT $first
+        """
+      )
     name: String!
     city: String!
     state: String!
@@ -41,10 +65,21 @@ type User {
   type Category {
     name: String!
     businesses: [Business!]! @relationship(type: "IN_CATEGORY", direction: IN)
+    businessCount: Int!
+      @cypher(statement: "MATCH (this)<-[:IN_CATEGORY]-(b:Business) RETURN count(b)")
   }
 `;
 
-const neoSchema = new Neo4jGraphQL({ typeDefs, driver});
+const resolvers = {
+  Business: {
+    waitTime: (obj, args, context, info) => {
+      const options = [0,5,10,15,30,45];
+      return options[Math.floor(Math.random() * options.length)]
+    }
+  }
+}
+
+const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver});
 
 neoSchema.getSchema().then((schema) => {
     const server = new ApolloServer({
