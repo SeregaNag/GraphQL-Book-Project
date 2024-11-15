@@ -1,6 +1,7 @@
 const { ApolloServer } = require("apollo-server");
 const neo4j = require("neo4j-driver");
 const { Neo4jGraphQL } = require("@neo4j/graphql");
+const {Neo4jGraphQLAuthJWTPlugin} = require("@neo4j/graphql-plugin-auth")
 
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "52525011"));
 
@@ -24,8 +25,9 @@ type Query {
 
 type Business {
     businessId: ID!
-    waitTime: Int
-    averageStars: Float! 
+    waitTime: Int! @customResolver
+    averageStars: Float
+      @auth(rules: [{isAuthenticated: true}]) 
       @cypher(
         statement: "MATCH (this)<-[:REVIEWS]-(r:Review) RETURN avg(r.stars)"
       )
@@ -79,11 +81,16 @@ type User {
    }
  }
 
-const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver});
+const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver, plugins: {
+  auth: new Neo4jGraphQLAuthJWTPlugin({
+    secret: process.env.JWT_SECRET,
+  })
+}});
 
 neoSchema.getSchema().then((schema) => {
     const server = new ApolloServer({
-        schema
+        schema,
+        context: ({req}) => ({req}),
     })
 
     server.listen().then(({url}) => {

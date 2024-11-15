@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@neo4j/graphql": "^3.24.3",
+    "@neo4j/graphql-plugin-auth": "^2.2.0",
     "@neo4j/introspector": "^1.0.3",
     "apollo-server": "^3.13.0",
     "graphql": "^16.9.0",
