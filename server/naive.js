@@ -1,4 +1,5 @@
 const { ApolloServer } = require("apollo-server");
+const jwt = require("jsonwebtoken")
 
 const peopleArray = [
     {
@@ -22,7 +23,7 @@ const peopleArray = [
   const resolvers = {
     Query: {
         people: (obj, args, context, info) => {
-            if (context && context.headers && context.headers.authorization === "Bearer authorized123") {
+            if (context.user) {
                 return peopleArray;
             } else throw new Error("You are not authorized")
         }
@@ -33,7 +34,20 @@ const peopleArray = [
     resolvers,
     typeDefs,
     context: ({req}) => {
-        return { headers: req.headers};
+        let decoded;
+        if(req && req.headers && req.headers.authorization) {
+          try {
+            decoded = jwt.verify(
+              req.headers.authorization.slice(7),
+              "rNdmStrSrg5159Jbt8lapBinGi"
+            )
+          } catch (e) {
+            console.log(e);
+          }
+        }
+        return {
+          user: decoded
+        }
     }
   })
 
