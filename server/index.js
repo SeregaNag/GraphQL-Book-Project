@@ -24,7 +24,7 @@ type Query {
 
 type Business {
     businessId: ID!
-    waitTime: Int! 
+    waitTime: Int
     averageStars: Float! 
       @cypher(
         statement: "MATCH (this)<-[:REVIEWS]-(r:Review) RETURN avg(r.stars)"
@@ -70,14 +70,14 @@ type User {
   }
 `;
 
-const resolvers = {
-  Business: {
+ const resolvers = {
+   Business: {
     waitTime: (obj, args, context, info) => {
-      const options = [0,5,10,15,30,45];
-      return options[Math.floor(Math.random() * options.length)]
-    }
-  }
-}
+       const options = [0,5,10,15,30,45];
+       return options[Math.floor(Math.random() * options.length)]
+     }
+   }
+ }
 
 const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver});
 
