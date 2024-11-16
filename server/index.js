@@ -1,7 +1,8 @@
 const { ApolloServer } = require("apollo-server");
 const neo4j = require("neo4j-driver");
 const { Neo4jGraphQL } = require("@neo4j/graphql");
-const {Neo4jGraphQLAuthJWTPlugin} = require("@neo4j/graphql-plugin-auth")
+const {Neo4jGraphQLAuthJWTPlugin} = require("@neo4j/graphql-plugin-auth");
+require('dotenv').config();
 
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "52525011"));
 
@@ -90,11 +91,15 @@ const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver, plugins: {
 neoSchema.getSchema().then((schema) => {
     const server = new ApolloServer({
         schema,
-        context: ({req}) => ({req}),
+        context: ({req}) => {
+          console.log(req.headers.authorization);
+          return {req}
+        },
     })
 
     server.listen().then(({url}) => {
         console.log(`GraphQL server ready at ${url}`);
+        console.log(process.env.JWT_SECRET);
     })
 });
 
