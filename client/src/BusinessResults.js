@@ -1,8 +1,11 @@
+import { useAuth0 } from "@auth0/auth0-react";
 import { starredVar } from ".";
 
 function BusinessResults(props) {
     const {businesses} = props;
     const starredItems = starredVar();
+
+    const { isAuthenticated } = useAuth0();
 
     return (
         <div>
@@ -10,11 +13,12 @@ function BusinessResults(props) {
               <table>
                 <thead>
                   <tr>
-                    <th></th>
+                    <th>Star</th>
                     <th>Name</th>
                     <th>Address</th>
                     <th>City</th>
                     <th>Category</th>
+                    {isAuthenticated ? <th>Average Stars</th> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -39,6 +43,7 @@ function BusinessResults(props) {
                     <td>{b.address}</td>
                     <td>{b.city}</td>
                     <td>{b.categories.reduce((acc, c, i) => acc + (i === 0 ? " ": ", ") + c.name, '')}</td>
+                    {isAuthenticated ? <td>{b.averageStars}</td> : null}
                   </tr>
                 ))}
                 </tbody>

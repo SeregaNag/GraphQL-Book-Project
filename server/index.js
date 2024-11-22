@@ -1,7 +1,7 @@
 const { ApolloServer } = require("apollo-server");
 const neo4j = require("neo4j-driver");
 const { Neo4jGraphQL } = require("@neo4j/graphql");
-const {Neo4jGraphQLAuthJWTPlugin} = require("@neo4j/graphql-plugin-auth");
+const {Neo4jGraphQLAuthJWKSPlugin} = require("@neo4j/graphql-plugin-auth");
 require('dotenv').config();
 
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "52525011"));
@@ -28,7 +28,7 @@ const typeDefs = /* GraphQL */ `
     businessId: ID!
     waitTime: Int! @customResolver
     averageStars: Float
-      @auth(rules: [{isAuthenticated: true}]) 
+      
       @cypher(
         statement: "MATCH (this)<-[:REVIEWS]-(r:Review) RETURN avg(r.stars)"
       )
@@ -56,11 +56,12 @@ const typeDefs = /* GraphQL */ `
     reviews: [Review!]! @relationship(type: "WROTE", direction: OUT)
   }
 
+  #extend type User @auth(rules: [{operations: [READ], allow: {userId: "$jwt.sub"}}, {roles: ["admin"]}])
   extend type User
     @auth(
       rules: [
-        { operations: [READ], where: { userId: "$jwt.sub"}}
-        { operations: [CREATE, UPDATE, DELETE], roles: ["admin"]}
+        { operations: [READ], where: { userId: "$jwt.sub" } }
+        { operations: [CREATE, UPDATE, DELETE], roles: ["admin"] }
       ]
     )
 
@@ -102,8 +103,8 @@ type Review {
  }
 
 const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver, plugins: {
-  auth: new Neo4jGraphQLAuthJWTPlugin({
-    secret: process.env.JWT_SECRET,
+  auth: new Neo4jGraphQLAuthJWKSPlugin({
+    jwksEndpoint: "https://dev-332ybztd8aifgjxm.us.auth0.com/.well-known/jwks.json",
   })
 }});
 

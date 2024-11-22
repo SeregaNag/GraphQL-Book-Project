@@ -1,9 +1,19 @@
 import { useState } from "react";
 import BusinessResults from "./BusinessResults";
 import { gql, useQuery } from "@apollo/client";
+import { useAuth0 } from "@auth0/auth0-react";
+import Profile from "./Profile";
 
-const BUSINESS_DETAILS_FRAGMENT = gql`
-  fragment businessDetails on Business {
+
+
+
+function BusinessSearch() {
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const {loginWithRedirect, logout, isAuthenticated} = useAuth0();
+
+  const GET_BUSINESS_QUERY = gql`
+query BusiessesByCategory($selectedCategory: String!){
+  businesses(where: {categories_SOME: {name_CONTAINS: $selectedCategory}}) {
     businessId
     name
     city
@@ -11,21 +21,12 @@ const BUSINESS_DETAILS_FRAGMENT = gql`
     categories {
       name
     }
-  }
-`
-
-const GET_BUSINESS_QUERY = gql`
-query BusiessesByCategory($selectedCategory: String!){
-  businesses(where: {categories_SOME: {name_CONTAINS: $selectedCategory}}) {
-    ...businessDetails
+    ${isAuthenticated ? "averageStars" : ""}
     isStarred @client
   }
 }
-  ${BUSINESS_DETAILS_FRAGMENT}
+ 
 `
-
-function BusinessSearch() {
-  const [selectedCategory, setSelectedCategory] = useState("");
 
   const {loading, error, data, refetch} = useQuery(GET_BUSINESS_QUERY, {variables: {selectedCategory}});
 
@@ -34,6 +35,9 @@ function BusinessSearch() {
 
   return (
     <div>
+      {!isAuthenticated && (<button onClick={() => loginWithRedirect()}>Log in</button>)}
+      {isAuthenticated && (<button onClick={() => logout()}>Log out</button>)}
+      <Profile/>
       <h1>Business Search</h1>
       <form>
         <label>
