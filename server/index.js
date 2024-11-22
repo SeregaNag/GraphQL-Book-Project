@@ -1,6 +1,8 @@
 const { ApolloServer } = require("apollo-server");
 const neo4j = require("neo4j-driver");
 const { Neo4jGraphQL } = require("@neo4j/graphql");
+const {Neo4jGraphQLAuthJWTPlugin} = require("@neo4j/graphql-plugin-auth");
+require('dotenv').config();
 
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "52525011"));
 
@@ -12,20 +14,21 @@ driver.verifyConnectivity().then(() => {
 
 
 const typeDefs = /* GraphQL */ `
-type Query {
-    fuzzyBusinessByName(searchString: String): [Business!]!
-      @cypher(
-        statement: """
-        CALL db.index.fulltext.queryNodes( 'businessNameIndex', $searchString+'~')
-        YIELD node RETURN node
-        """
-      )
-  }
+  type Query {
+      fuzzyBusinessByName(searchString: String): [Business!]!
+        @cypher(
+          statement: """
+          CALL db.index.fulltext.queryNodes( 'businessNameIndex', $searchString+'~')
+          YIELD node RETURN node
+          """
+        ) 
+    }
 
-type Business {
+  type Business {
     businessId: ID!
-    waitTime: Int
-    averageStars: Float! 
+    waitTime: Int! @customResolver
+    averageStars: Float
+      @auth(rules: [{isAuthenticated: true}]) 
       @cypher(
         statement: "MATCH (this)<-[:REVIEWS]-(r:Review) RETURN avg(r.stars)"
       )
@@ -47,20 +50,39 @@ type Business {
     categories: [Category!]! @relationship(type: "IN_CATEGORY", direction: OUT)
   }
 
-type User {
-    userID: ID!
+  type User {
+    userId: ID!
     name: String!
     reviews: [Review!]! @relationship(type: "WROTE", direction: OUT)
   }
 
-  type Review {
-    reviewId: ID!
-    stars: Float!
-    date: Date!
-    text: String
-    user: User! @relationship(type: "WROTE", direction: IN)
-    business: Business! @relationship(type: "REVIEWS", direction: OUT)
-  }
+  extend type User
+    @auth(
+      rules: [
+        { operations: [READ], where: { userId: "$jwt.sub"}}
+        { operations: [CREATE, UPDATE, DELETE], roles: ["admin"]}
+      ]
+    )
+
+type Review {
+  reviewId: ID!
+  stars: Float!
+  date: Date!
+  text: String
+  user: User! @relationship(type: "WROTE", direction: IN)
+  business: Business! @relationship(type: "REVIEWS", direction: OUT)
+}
+
+  extend type Review
+    @auth(
+      rules: [
+      {
+        operations: [CREATE, UPDATE]
+        bind: {user: {userId: "$jwt.sub"}}
+      }
+      ]
+    )
+
 
   type Category {
     name: String!
@@ -79,15 +101,21 @@ type User {
    }
  }
 
-const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver});
+const neoSchema = new Neo4jGraphQL({ typeDefs,resolvers, driver, plugins: {
+  auth: new Neo4jGraphQLAuthJWTPlugin({
+    secret: process.env.JWT_SECRET,
+  })
+}});
 
 neoSchema.getSchema().then((schema) => {
     const server = new ApolloServer({
-        schema
+        schema,
+        context: ({req}) => {
+          return {req}
+        },
     })
 
     server.listen().then(({url}) => {
         console.log(`GraphQL server ready at ${url}`);
     })
 });
-
