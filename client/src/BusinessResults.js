@@ -1,5 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { starredVar } from ".";
+import "./BusinessResult.css"
 
 function BusinessResults(props) {
     const {businesses} = props;

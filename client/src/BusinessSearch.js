@@ -3,9 +3,7 @@ import BusinessResults from "./BusinessResults";
 import { gql, useQuery } from "@apollo/client";
 import { useAuth0 } from "@auth0/auth0-react";
 import Profile from "./Profile";
-
-
-
+import "./BusinessSearch.css"
 
 function BusinessSearch() {
   const [selectedCategory, setSelectedCategory] = useState("");

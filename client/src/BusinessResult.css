@@ -1,0 +1,51 @@
+/* General table container */
+div {
+    width: 100%;
+    max-width: 1200px;
+    overflow: auto;
+    margin: 20px auto;
+  }
+  
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    text-align: left;
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  th {
+    background-color: #f4f4f4;
+    color: #333;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Button styling */
+  button {
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #e68900;
+  }
+  
+  td:first-child {
+    text-align: center;
+  }
+  

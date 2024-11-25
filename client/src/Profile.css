@@ -1,0 +1,27 @@
+/* Profile container */
+div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+    padding: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* User avatar styling */
+  img {
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  /* User name styling */
+  strong {
+    font-size: 16px;
+    color: #333;
+  }
+  
